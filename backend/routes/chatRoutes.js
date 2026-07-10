@@ -7,23 +7,23 @@ dotenv.config();
 
 const router = express.Router();
 
-// OpenRouter exposes an OpenAI-compatible API, so we use the openai client
-// pointed at OpenRouter's base URL.
-const openai = process.env.OPENROUTER_API_KEY
+// Groq exposes an OpenAI-compatible API, so we use the openai client
+// pointed at Groq's base URL.
+const openai = process.env.GROQ_API_KEY
   ? new OpenAI({
-      apiKey: process.env.OPENROUTER_API_KEY,
-      baseURL: 'https://openrouter.ai/api/v1',
+      apiKey: process.env.GROQ_API_KEY,
+      baseURL: 'https://api.groq.com/openai/v1',
     })
   : null;
 
-// Model can be overridden via env without a code change. Defaults to a free model.
-const MODEL = process.env.OPENROUTER_MODEL || 'meta-llama/llama-3.3-70b-instruct:free';
+// Model can be overridden via env without a code change. Defaults to a Groq model.
+const MODEL = process.env.GROQ_MODEL || 'llama-3.3-70b-versatile';
 
 const SYSTEM_PROMPT =
   'You are a helpful AI assistant in a chat application. Be concise, friendly, and helpful.';
 
 const MOCK_RESPONSE =
-  'This is a mock AI response. Add OPENROUTER_API_KEY to the backend .env to get real AI responses.';
+  'This is a mock AI response. Add GROQ_API_KEY to the backend .env to get real AI responses.';
 
 // Map stored messages to the OpenAI/OpenRouter chat format
 const toApiMessages = (messages) => [
