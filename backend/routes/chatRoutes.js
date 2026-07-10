@@ -1,30 +1,38 @@
 import express from 'express';
 import dotenv from 'dotenv';
-import { GoogleGenAI } from '@google/genai';
+import OpenAI from 'openai';
 import { requireAuth } from '../middleware/auth.js';
 
 dotenv.config();
 
 const router = express.Router();
 
-const genAI = process.env.GEMINI_API_KEY
-  ? new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY })
+// OpenRouter exposes an OpenAI-compatible API, so we use the openai client
+// pointed at OpenRouter's base URL.
+const openai = process.env.OPENROUTER_API_KEY
+  ? new OpenAI({
+      apiKey: process.env.OPENROUTER_API_KEY,
+      baseURL: 'https://openrouter.ai/api/v1',
+    })
   : null;
 
-const MODEL = 'gemini-2.0-flash';
+// Model can be overridden via env without a code change. Defaults to a free model.
+const MODEL = process.env.OPENROUTER_MODEL || 'meta-llama/llama-3.3-70b-instruct:free';
 
 const SYSTEM_PROMPT =
   'You are a helpful AI assistant in a chat application. Be concise, friendly, and helpful.';
 
 const MOCK_RESPONSE =
-  'This is a mock AI response. Add GEMINI_API_KEY to the backend .env to get real AI responses.';
+  'This is a mock AI response. Add OPENROUTER_API_KEY to the backend .env to get real AI responses.';
 
-// Map stored messages to the Gemini API format
-const toApiMessages = (messages) =>
-  messages.map((msg) => ({
-    role: msg.sender === 'user' ? 'user' : 'model',
-    parts: [{ text: msg.content }],
-  }));
+// Map stored messages to the OpenAI/OpenRouter chat format
+const toApiMessages = (messages) => [
+  { role: 'system', content: SYSTEM_PROMPT },
+  ...messages.map((msg) => ({
+    role: msg.sender === 'user' ? 'user' : 'assistant',
+    content: msg.content,
+  })),
+];
 
 // Streaming chat endpoint (Server-Sent Events).
 // Emits `data: {"delta": "..."}` chunks and a final `data: {"done": true}` line.
@@ -44,7 +52,7 @@ router.post('/chat', requireAuth, async (req, res) => {
   const send = (payload) => res.write(`data: ${JSON.stringify(payload)}\n\n`);
 
   // No API key configured: stream the mock response so the UI behaves identically
-  if (!genAI) {
+  if (!openai) {
     send({ delta: MOCK_RESPONSE });
     send({ done: true });
     return res.end();
@@ -59,15 +67,15 @@ router.post('/chat', requireAuth, async (req, res) => {
     const maxAttempts = 3;
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       try {
-        return await genAI.models.generateContentStream({
-          model: MODEL,
-          contents: toApiMessages(messages),
-          config: {
-            systemInstruction: SYSTEM_PROMPT,
-            maxOutputTokens: 16000,
-            abortSignal: controller.signal,
+        return await openai.chat.completions.create(
+          {
+            model: MODEL,
+            messages: toApiMessages(messages),
+            max_tokens: 16000,
+            stream: true,
           },
-        });
+          { signal: controller.signal }
+        );
       } catch (error) {
         const transient = error?.status === 503 || error?.status === 429;
         if (!transient || attempt === maxAttempts || controller.signal.aborted) {
@@ -83,7 +91,7 @@ router.post('/chat', requireAuth, async (req, res) => {
     const stream = await openStream();
 
     for await (const chunk of stream) {
-      const text = chunk.text;
+      const text = chunk.choices?.[0]?.delta?.content;
       if (text) send({ delta: text });
     }
 
