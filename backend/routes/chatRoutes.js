@@ -11,7 +11,7 @@ const genAI = process.env.GEMINI_API_KEY
   ? new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY })
   : null;
 
-const MODEL = 'gemini-flash-latest';
+const MODEL = 'gemini-2.0-flash';
 
 const SYSTEM_PROMPT =
   'You are a helpful AI assistant in a chat application. Be concise, friendly, and helpful.';
@@ -54,16 +54,33 @@ router.post('/chat', requireAuth, async (req, res) => {
   const controller = new AbortController();
   req.on('close', () => controller.abort());
 
+  // Open the stream, retrying a couple of times on transient overload (503/429)
+  const openStream = async () => {
+    const maxAttempts = 3;
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        return await genAI.models.generateContentStream({
+          model: MODEL,
+          contents: toApiMessages(messages),
+          config: {
+            systemInstruction: SYSTEM_PROMPT,
+            maxOutputTokens: 16000,
+            abortSignal: controller.signal,
+          },
+        });
+      } catch (error) {
+        const transient = error?.status === 503 || error?.status === 429;
+        if (!transient || attempt === maxAttempts || controller.signal.aborted) {
+          throw error;
+        }
+        // Exponential backoff: 1s, 2s
+        await new Promise((r) => setTimeout(r, attempt * 1000));
+      }
+    }
+  };
+
   try {
-    const stream = await genAI.models.generateContentStream({
-      model: MODEL,
-      contents: toApiMessages(messages),
-      config: {
-        systemInstruction: SYSTEM_PROMPT,
-        maxOutputTokens: 16000,
-        abortSignal: controller.signal,
-      },
-    });
+    const stream = await openStream();
 
     for await (const chunk of stream) {
       const text = chunk.text;
@@ -79,6 +96,8 @@ router.post('/chat', requireAuth, async (req, res) => {
     // Headers are already sent, so surface the error inside the SSE stream
     if (error?.status === 429) {
       send({ error: 'AI service is rate limited, please try again shortly' });
+    } else if (error?.status === 503) {
+      send({ error: 'AI service is busy right now, please try again in a moment' });
     } else {
       console.error('Error in chat stream:', error);
       send({ error: 'AI service error, please try again' });
