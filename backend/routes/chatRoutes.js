@@ -71,7 +71,9 @@ router.post('/chat', requireAuth, async (req, res) => {
           {
             model: MODEL,
             messages: toApiMessages(messages),
-            max_tokens: 16000,
+            // Kept under Groq's free-tier 12k tokens-per-minute limit
+            // (this counts toward TPM even before generation).
+            max_tokens: 4096,
             stream: true,
           },
           { signal: controller.signal }
