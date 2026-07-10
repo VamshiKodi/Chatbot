@@ -11,7 +11,7 @@ const genAI = process.env.GEMINI_API_KEY
   ? new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY })
   : null;
 
-const MODEL = 'gemini-2.5-flash';
+const MODEL = 'gemini-flash-latest';
 
 const SYSTEM_PROMPT =
   'You are a helpful AI assistant in a chat application. Be concise, friendly, and helpful.';
