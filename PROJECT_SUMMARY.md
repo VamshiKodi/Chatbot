@@ -22,6 +22,19 @@ This is a full-stack AI chatbot web application built as a college project and i
 
 ---
 
+## 🌐 Live Deployment
+| Part | Host | URL |
+|------|------|-----|
+| **Frontend** | Netlify | https://aichatbot18.netlify.app |
+| **Backend**  | Render  | https://chatbot-2j11.onrender.com |
+| **Repository** | GitHub | https://github.com/VamshiKodi/Chatbot |
+
+- Both services auto-deploy on every push to the `main` branch.
+- Render's free instance sleeps after ~15 min idle, so the first request after inactivity can take ~50s to wake.
+- Supabase **Authentication → URL Configuration** points its Site URL and Redirect URLs (`/**`) at the Netlify domain so email confirmation and password-reset links work in production.
+
+---
+
 ## ✅ Completed Work
 
 ### 1️⃣ Project Setup
@@ -113,6 +126,9 @@ This is a full-stack AI chatbot web application built as a college project and i
 - [x] **Admin user management** — change roles, delete users (auth-user deletion requires the service role key)
 - [x] **Admin conversation deletion**
 - [x] **Rate limiting** — global (100/15min) and per-chat (20/5min)
+- [x] **Full mobile responsiveness** — user & admin sidebars use a hamburger drawer on mobile, tables scroll horizontally, auth cards and chat spacing adapt to small screens
+- [x] **Production deployment** — frontend on Netlify, backend on Render (see live URLs below)
+- [x] **Registration full name fix** — the sign-up form now stores `full_name` (previously mislabeled "Username" and saved under the wrong metadata key, so admin views showed blank names)
 
 ---
 
@@ -122,7 +138,6 @@ This is a full-stack AI chatbot web application built as a college project and i
 - [ ] **Pagination** — admin tables lack pagination for large datasets
 
 ### 2️⃣ User Experience Improvements
-- [ ] **Mobile Responsiveness** — some admin tables may not display well on mobile
 - [ ] **Loading States** — more comprehensive loading indicators
 
 ### 3️⃣ Admin Features
@@ -134,8 +149,7 @@ This is a full-stack AI chatbot web application built as a college project and i
 - [ ] **Optimized Queries** — some database queries could be optimized
 
 ### 5️⃣ Deployment
-- [ ] **Production Deployment** — not yet deployed to a hosting service
-- [ ] **CI/CD Pipeline** — no automated deployment setup
+- [ ] **CI/CD Pipeline** — no dedicated pipeline (Netlify/Render auto-deploy on push to `main`)
 
 ### 6️⃣ Additional Features (Future Scope)
 - [ ] **File Uploads** — users cannot upload files to chat

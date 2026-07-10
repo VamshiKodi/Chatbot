@@ -11,7 +11,7 @@ export default function Register() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [username, setUsername] = useState('');
+  const [fullName, setFullName] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -65,8 +65,8 @@ export default function Register() {
       return;
     }
 
-    if (!username.trim()) {
-      setError('Username is required');
+    if (!fullName.trim()) {
+      setError('Full name is required');
       setLoading(false);
       return;
     }
@@ -78,7 +78,7 @@ export default function Register() {
         password,
         options: {
           data: {
-            username: username.trim(),
+            full_name: fullName.trim(),
           },
         },
       });
@@ -125,16 +125,16 @@ export default function Register() {
             />
           </div>
 
-          {/* Username field */}
+          {/* Full name field */}
           <div className="mb-4">
-            <label className="block text-gray-700 mb-2">Username</label>
+            <label className="block text-gray-700 mb-2">Full Name</label>
             <input
               type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
               className="w-full p-2 border rounded"
               required
-              placeholder="Choose a username"
+              placeholder="Enter your full name"
             />
           </div>
 
